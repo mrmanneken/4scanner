@@ -4,6 +4,7 @@ import time
 import json
 import os
 import re
+from typing import List
 from scanner import downloader, imageboard_info
 from scanner.config import DB_FILE, currently_downloading
 import sqlite3
@@ -53,7 +54,7 @@ class thread_scanner:
         return json.loads(catalog_data.decode("utf8"))
 
 
-    def scan_thread(self, keyword:str, catalog_json:str, subject_only:str, wildcard:str):
+    def scan_thread(self, keyword:List[str], catalog_json:str, subject_only:str, wildcard:str):
         """
         Check each thread, threads who contains the keyword are returned
 
@@ -69,46 +70,12 @@ class thread_scanner:
         matched_threads = []
         for i in range(len(catalog_json)):
             for thread in catalog_json[i]["threads"]:
-                if wildcard == "all":
-                    regex = r'{0}'.format(keyword)
-                    # Search thread subject
-                    if 'sub' in thread:
-                        if re.search(regex, str(thread["sub"]), re.IGNORECASE):
-                            matched_threads.append(thread["no"])
-
-                    if not subject_only:
-                        # Search OPs post body
-                        if 'com' in thread:
-                            if re.search(regex, str(thread["com"]), re.IGNORECASE):
-                                matched_threads.append(thread["no"])
-
-                elif wildcard == "start":
-                    regex = r'\b{0}'.format(keyword)
-                    # Search thread subject
-                    if 'sub' in thread:
-                        if re.search(regex, str(thread["sub"]), re.IGNORECASE):
-                            matched_threads.append(thread["no"])
-
-                    if not subject_only:
-                        # Search OPs post body
-                        if 'com' in thread:
-                            if re.search(regex, str(thread["com"]), re.IGNORECASE):
-                                matched_threads.append(thread["no"])
-                
-                else:
-                    regex = r'\b{0}\b'.format(keyword)
-                    # Search thread subject
-                    if 'sub' in thread:
-                        if re.search(regex, str(thread["sub"]), re.IGNORECASE):
-                            matched_threads.append(thread["no"])
-
-                    if not subject_only:
-                        # Search OPs post body
-                        if 'com' in thread:
-                            if re.search(regex, str(thread["com"]), re.IGNORECASE):
-                                matched_threads.append(thread["no"])
-
-
+                thread_combined = str(thread.get("sub", "")) + str(thread.get("com", ""))
+                if all(
+                    re.search(regex, thread_combined, re.IGNORECASE) for regex in keyword
+                ):
+                    self.logger.info(f"Thread \"{thread_combined}\" matches {str(keyword)}")
+                    matched_threads.append(thread["no"])
         return matched_threads
 
 
