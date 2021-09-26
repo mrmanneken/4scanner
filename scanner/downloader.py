@@ -194,6 +194,8 @@ class downloader:
             self.remove_thread_from_downloading()
             self.add_thread_to_downloaded()
             exit(0)
+        with open(os.path.join(self.out_dir, "thread.json"), mode="w") as f:
+            f.write(response.text)
         return response.text
 
 
