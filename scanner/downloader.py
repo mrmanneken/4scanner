@@ -15,6 +15,7 @@ import http.client
 import requests
 import threading
 import shutil
+import hashlib
 
 class downloader:
     def __init__(self, thread_nb:int, board:str, imageboard:str, output_folder:str, folder:str, is_quiet:bool, condition:dict, check_duplicate:bool, tags:list, throttle:int, logger, single_run=False):
@@ -194,16 +195,24 @@ class downloader:
             self.remove_thread_from_downloading()
             self.add_thread_to_downloaded()
             exit(0)
-        json_matches = re.findall(r"thread\.json\.([0-9]+)", " ".join(os.listdir(self.out_dir)))
-        if len(json_matches) > 0:
-            json_idx = max(int(x) for x in json_matches) + 1
-        else:
-            json_idx = 0
         json_path = os.path.join(self.out_dir, "thread.json")
-        with open(json_path, mode="w") as f:
-            f.write(response.text)
-        with open(json_path + "." + str(json_idx), mode="w") as f:
-            f.write(response.text)
+        try:
+            with open(json_path, mode="r") as f:
+                hashes = list(hashlib.md5(x.encode("utf-8")).hexdigest() for x in [f.read(), response.text])
+                identical = len(set(hashes)) == 1
+        except FileNotFoundError:
+            identical = False
+        if not identical:
+            json_matches = re.findall(r"thread\.json\.([0-9]+)", " ".join(os.listdir(self.out_dir)))
+            if len(json_matches) > 0:
+                json_idx = max(int(x) for x in json_matches) + 1
+            else:
+                json_idx = 0
+
+            with open(json_path, mode="w") as f:
+                f.write(response.text)
+            with open(json_path + "." + str(json_idx), mode="w") as f:
+                f.write(response.text)
         return response.text
 
 
