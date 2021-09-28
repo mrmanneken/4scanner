@@ -194,7 +194,15 @@ class downloader:
             self.remove_thread_from_downloading()
             self.add_thread_to_downloaded()
             exit(0)
-        with open(os.path.join(self.out_dir, "thread.json"), mode="w") as f:
+        json_matches = re.findall(r"thread\.json\.([0-9]+)", " ".join(os.listdir(self.out_dir)))
+        if len(json_matches) > 0:
+            json_idx = max(int(x) for x in json_matches) + 1
+        else:
+            json_idx = 0
+        json_path = os.path.join(self.out_dir, "thread.json")
+        with open(json_path, mode="w") as f:
+            f.write(response.text)
+        with open(json_path + "." + str(json_idx), mode="w") as f:
             f.write(response.text)
         return response.text
 
