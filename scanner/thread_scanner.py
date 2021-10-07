@@ -76,6 +76,9 @@ class thread_scanner:
                 ):
                     self.logger.info(f"Thread \"{thread_combined}\" matches {str(keyword)}")
                     matched_threads.append(thread["no"])
+                # else:
+                #     with open("log.txt", mode="a") as f:
+                #         print(f"Thread \"{thread_combined}\" doesn't match {str(keyword)}", file=f)
         return matched_threads
 
 
@@ -314,7 +317,7 @@ class thread_scanner:
                                                 tag_list, throttle)
                             # Used to keep track of what is currently downloading
                             currently_downloading.append(thread_id)
-                except urllib.error.HTTPError as err:
+                except (urllib.error.HTTPError, ConnectionResetError) as err:
                     self.logger.warning("Error while opening {0} catalog page. "
                                 "Retrying during next scan.".format(board))
                     pass
